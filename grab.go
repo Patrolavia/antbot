@@ -9,7 +9,9 @@ import (
 	"time"
 )
 
-type Sender func(fn string, duration int, t time.Time)
+type Sender interface {
+	Send(fn string, duration int, t time.Time)
+}
 
 // Grabber defines a procedure to grab live video
 type Grabber struct {
@@ -92,6 +94,6 @@ func (g *Grabber) Cleanup(dir string) {
 // Send video via registered senders
 func (g *Grabber) Send(dir string, duration int, t time.Time) {
 	for _, sender := range g.Senders {
-		sender(dir + "/ant.mp4", duration, t)
+		sender.Send(dir+"/ant.mp4", duration, t)
 	}
 }

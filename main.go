@@ -1,48 +1,51 @@
 package main
 
 import (
-	"io/ioutil"
+	"flag"
 	"log"
 	"os"
 	"strconv"
-	"strings"
-	"time"
 
 	"github.com/Patrolavia/botgoram/telegram"
 )
 
 func main() {
-	tokenByte, err := ioutil.ReadFile("token")
-	if err != nil {
-		log.Fatalf(`Cannot read telegram bot token from file "token": %s`, err)
-	}
+	var (
+		tokenFile  string
+		channel    string
+		segment    int
+		resolution string
+		spf        int
+		format     string
+		device     string
+		bot        telegram.API
+	)
 
-	token := strings.TrimSpace(string(tokenByte))
+	flag.StringVar(&tokenFile, "t", "token", "The file holding telegram bot token")
+	flag.StringVar(&channel, "ch", "", "Telegram channel to announce your video, leave empty if not using this feature")
+	flag.IntVar(&segment, "seg", 1800, "Time to record for each video segment")
+	flag.StringVar(&resolution, "size", "640x480", "Cam source resolution")
+	flag.IntVar(&spf, "spf", 1, "Grab 1 frame every `N` seconds")
+	flag.StringVar(&format, "f", "v4l2", "Source format for ffmpeg")
+	flag.StringVar(&device, "i", "/dev/video0", "Input file for ffmpeg")
+	flag.Parse()
 
-	bot := telegram.New(token)
+	senders := []Sender{}
 
-	if _, err := bot.Me(); err != nil {
-		log.Fatalf("Error validating bot: %s", err)
+	if channel != "" {
+		bot = initTelegram(tokenFile)
+		senders = append(senders, &TelegramChannelSender{bot, channel})
 	}
 
 	i := 0
 
 	grabber := &Grabber{
-		Segment:    1800,
-		Resolution: "640x480",
-		SPF:        1,
-		Format:     "v4l2",
-		Device:     "/dev/video0",
-		Senders: []Sender{func(fn string, duration int, t time.Time) {
-			caption := t.Local().Format("2006-1-2 15:04:05")
-			bot.SendVideo(
-				&telegram.Chat{User: &telegram.User{Username: "@ronmiants"}, Type: "channel"},
-				&telegram.File{Filename: fn, MimeType: "video/mp4"},
-				duration,
-				caption,
-				nil,
-			)
-		}},
+		Segment:    segment,
+		Resolution: resolution,
+		SPF:        spf,
+		Format:     format,
+		Device:     device,
+		Senders:    senders,
 	}
 
 	for {
