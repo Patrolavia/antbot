@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"os"
 	"os/exec"
@@ -24,10 +25,11 @@ type Grabber struct {
 }
 
 // Grab image from web cam
-func (g *Grabber) Grab(dir string) (err error) {
+func (g *Grabber) Grab(dir string) {
 	t := time.Now()
 	seg := strconv.Itoa(g.Segment)
-	fn := fmt.Sprintf("%s/%%0%.0f.png", dir, math.Log10(float64(g.Segment)/float64(g.SPF)))
+	fn := fmt.Sprintf("%s/%%0%.0fd.png", dir, math.Log10(float64(g.Segment)/float64(g.SPF)))
+	log.Printf("Grabbing to dir %s ...", fn)
 	frameRate := fmt.Sprintf("1/%d", g.SPF)
 
 	proc := exec.Command(
@@ -40,17 +42,23 @@ func (g *Grabber) Grab(dir string) (err error) {
 		fn,
 	)
 
-	if err = proc.Run(); err != nil {
-		return
+	if f, err := os.Create(dir + "/grab.out"); err == nil {
+		proc.Stdout = f
+		proc.Stderr = f
+		defer f.Close()
 	}
 
-	go g.Encode(dir, fn, t)
-	return
+	if err := proc.Run(); err == nil {
+		go g.Encode(dir, fn, t)
+	} else {
+		log.Fatalf("Grabber error: %s", err)
+	}
 }
 
 // Encode grabbed image to video
 func (g *Grabber) Encode(dir, fn string, t time.Time) {
 	defer g.Cleanup(dir)
+	log.Printf("Encoding from %s ...", fn)
 
 	// encode to mp4. ref: http://rodrigopolo.com/ffmpeg/cheats.php
 	proc := exec.Command(
@@ -58,17 +66,10 @@ func (g *Grabber) Encode(dir, fn string, t time.Time) {
 		"-i", fn,
 		"-s", g.Resolution,
 		"-r", "24000/1001",
-		"-b", "200k",
-		"-bt", "240k",
+		"-profile:v", "main",
+		"-level", "4.0",
+		"-pix_fmt", "yuv420p",
 		"-c:v", "libx264",
-		"-coder", "0",
-		"-bf", "0",
-		"-refs", "1",
-		"-flags2",
-		"-wpred-dct8x8",
-		"-level", "13",
-		"-maxrate", "10M",
-		"-bufsize", "10M",
 		"-c:a", "libfaac",
 		"-ac", "2",
 		"-ar", "48000",
@@ -76,8 +77,14 @@ func (g *Grabber) Encode(dir, fn string, t time.Time) {
 		dir+"/ant.mp4",
 	)
 
+	if f, err := os.Create(dir + "/encode.out"); err == nil {
+		proc.Stdout = f
+		proc.Stderr = f
+		defer f.Close()
+	}
+
 	if err := proc.Run(); err != nil {
-		return
+		log.Fatalf("Encoder error: %s", err)
 	}
 
 	totalFrames := g.Segment / g.SPF
@@ -88,6 +95,7 @@ func (g *Grabber) Encode(dir, fn string, t time.Time) {
 
 // Cleanup work temp
 func (g *Grabber) Cleanup(dir string) {
+	log.Printf("Cleaning up %s ...", dir)
 	os.RemoveAll(dir)
 }
 

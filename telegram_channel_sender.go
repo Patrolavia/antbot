@@ -16,13 +16,14 @@ type TelegramChannelSender struct {
 
 func (s *TelegramChannelSender) Send(fn string, duration int, t time.Time) {
 	caption := t.Local().Format("2006-1-2 15:04:05")
-	s.API.SendVideo(
+	_, err := s.API.SendVideo(
 		&telegram.Chat{User: &telegram.User{Username: s.Channel}, Type: telegram.TYPECHANNEL},
 		&telegram.File{Filename: fn, MimeType: "video/mp4"},
 		duration,
 		caption,
 		nil,
 	)
+	log.Printf("%s video sent to channel %s (err=%v)", caption, s.Channel, err)
 }
 
 func initTelegram(file string) telegram.API {

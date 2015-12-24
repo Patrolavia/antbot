@@ -49,10 +49,13 @@ func main() {
 	}
 
 	for {
-		dir := strconv.Itoa(i)
+		dir := "work" + strconv.Itoa(i)
 		if err := os.Mkdir(dir, 0644); err != nil {
 			log.Fatalf("Cannot create temp dir %s: %s", dir, err)
 		}
 		grabber.Grab(dir)
+		if i++; i > 99 {
+			i = 0
+		}
 	}
 }
