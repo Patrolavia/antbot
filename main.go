@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -30,11 +31,18 @@ func main() {
 	flag.StringVar(&device, "i", "/dev/video0", "Input file for ffmpeg")
 	flag.Parse()
 
+	logFile, err := os.Create("ant.log")
+	if err != nil {
+		log.Fatalf("Cannot create logfile ant.log: %s", err)
+	}
+
+	logger := log.New(io.MultiWriter(logFile, os.Stderr), "", log.LstdFlags)
+
 	senders := []Sender{}
 
 	if channel != "" {
 		bot = initTelegram(tokenFile)
-		senders = append(senders, &TelegramChannelSender{bot, channel})
+		senders = append(senders, &TelegramChannelSender{bot, channel, logger})
 	}
 
 	i := 0
@@ -46,12 +54,13 @@ func main() {
 		Format:     format,
 		Device:     device,
 		Senders:    senders,
+		Logger:     logger,
 	}
 
 	for {
 		dir := "work" + strconv.Itoa(i)
 		if err := os.Mkdir(dir, 0644); err != nil {
-			log.Fatalf("Cannot create temp dir %s: %s", dir, err)
+			logger.Fatalf("Cannot create temp dir %s: %s", dir, err)
 		}
 		grabber.Grab(dir)
 		if i++; i > 99 {

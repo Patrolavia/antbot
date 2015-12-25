@@ -12,6 +12,7 @@ import (
 type TelegramChannelSender struct {
 	API     telegram.API
 	Channel string
+	*log.Logger
 }
 
 func (s *TelegramChannelSender) Send(fn string, duration int, t time.Time) {
@@ -23,7 +24,7 @@ func (s *TelegramChannelSender) Send(fn string, duration int, t time.Time) {
 		caption,
 		nil,
 	)
-	log.Printf("%s video sent to channel %s (err=%v)", caption, s.Channel, err)
+	s.Printf("%s video sent to channel %s (err=%v)", caption, s.Channel, err)
 }
 
 func initTelegram(file string) telegram.API {

@@ -22,6 +22,7 @@ type Grabber struct {
 	Format     string
 	Device     string
 	Senders    []Sender
+	*log.Logger
 }
 
 // Grab image from web cam
@@ -29,7 +30,7 @@ func (g *Grabber) Grab(dir string) {
 	t := time.Now()
 	seg := strconv.Itoa(g.Segment)
 	fn := fmt.Sprintf("%s/%%0%.0fd.png", dir, math.Log10(float64(g.Segment)/float64(g.SPF)))
-	log.Printf("Grabbing to dir %s ...", fn)
+	g.Printf("Grabbing to dir %s ...", fn)
 	frameRate := fmt.Sprintf("1/%d", g.SPF)
 
 	proc := exec.Command(
@@ -51,14 +52,14 @@ func (g *Grabber) Grab(dir string) {
 	if err := proc.Run(); err == nil {
 		go g.Encode(dir, fn, t)
 	} else {
-		log.Fatalf("Grabber error: %s", err)
+		g.Fatalf("Grabber error: %s", err)
 	}
 }
 
 // Encode grabbed image to video
 func (g *Grabber) Encode(dir, fn string, t time.Time) {
 	defer g.Cleanup(dir)
-	log.Printf("Encoding from %s ...", fn)
+	g.Printf("Encoding from %s ...", fn)
 
 	// encode to mp4. ref: http://rodrigopolo.com/ffmpeg/cheats.php
 	proc := exec.Command(
@@ -84,7 +85,7 @@ func (g *Grabber) Encode(dir, fn string, t time.Time) {
 	}
 
 	if err := proc.Run(); err != nil {
-		log.Fatalf("Encoder error: %s", err)
+		g.Fatalf("Encoder error: %s", err)
 	}
 
 	totalFrames := g.Segment / g.SPF
@@ -95,7 +96,7 @@ func (g *Grabber) Encode(dir, fn string, t time.Time) {
 
 // Cleanup work temp
 func (g *Grabber) Cleanup(dir string) {
-	log.Printf("Cleaning up %s ...", dir)
+	g.Printf("Cleaning up %s ...", dir)
 	os.RemoveAll(dir)
 }
 
