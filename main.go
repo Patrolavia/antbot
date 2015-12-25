@@ -3,9 +3,11 @@ package main
 import (
 	"flag"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/Patrolavia/botgoram/telegram"
 )
@@ -45,7 +47,7 @@ func main() {
 	senders := []Sender{}
 
 	if channel != "" {
-		bot = initTelegram(tokenFile)
+		bot = initTelegram(tokenFile, bot)
 		senders = append(senders, &TelegramChannelSender{bot, channel, logger})
 	}
 
@@ -75,4 +77,21 @@ func main() {
 			i = 0
 		}
 	}
+}
+
+func initTelegram(file string, bot telegram.API) telegram.API {
+	if bot != nil {
+		return bot
+	}
+	tokenByte, err := ioutil.ReadFile(file)
+	if err != nil {
+		log.Fatalf(`Cannot read telegram bot token from file "token": %s`, err)
+	}
+
+	ret := telegram.New(strings.TrimSpace(string(tokenByte)))
+
+	if _, err := ret.Me(); err != nil {
+		log.Fatalf("Error validating bot: %s", err)
+	}
+	return ret
 }

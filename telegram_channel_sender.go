@@ -1,9 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/Patrolavia/botgoram/telegram"
@@ -25,18 +23,4 @@ func (s *TelegramChannelSender) Send(fn string, duration int, t time.Time) {
 		nil,
 	)
 	s.Printf("%s video sent to channel %s (err=%v)", caption, s.Channel, err)
-}
-
-func initTelegram(file string) telegram.API {
-	tokenByte, err := ioutil.ReadFile(file)
-	if err != nil {
-		log.Fatalf(`Cannot read telegram bot token from file "token": %s`, err)
-	}
-
-	bot := telegram.New(strings.TrimSpace(string(tokenByte)))
-
-	if _, err := bot.Me(); err != nil {
-		log.Fatalf("Error validating bot: %s", err)
-	}
-	return bot
 }
