@@ -20,17 +20,19 @@ func main() {
 		format     string
 		device     string
 		logFile    string
+		scpPath    string
 		bot        telegram.API
 	)
 
-	flag.StringVar(&tokenFile, "t", "token", "The file holding telegram bot token")
-	flag.StringVar(&channel, "ch", "", "Telegram channel to announce your video, leave empty if not using this feature")
 	flag.IntVar(&segment, "seg", 1800, "Time to record for each video segment")
 	flag.StringVar(&resolution, "size", "640x480", "Cam source resolution")
 	flag.IntVar(&spf, "spf", 1, "Grab 1 frame every `N` seconds")
 	flag.StringVar(&format, "f", "v4l2", "Source format for ffmpeg")
 	flag.StringVar(&device, "i", "/dev/video0", "Input file for ffmpeg")
 	flag.StringVar(&logFile, "l", "ant.log", "Log file")
+	flag.StringVar(&tokenFile, "t", "token", "The file holding telegram bot token")
+	flag.StringVar(&channel, "ch", "", "Telegram channel to announce your video, leave empty if not using this feature")
+	flag.StringVar(&scpPath, "scp", "", "Send video to this path via scp")
 	flag.Parse()
 
 	logf, err := os.Create(logFile)
@@ -45,6 +47,10 @@ func main() {
 	if channel != "" {
 		bot = initTelegram(tokenFile)
 		senders = append(senders, &TelegramChannelSender{bot, channel, logger})
+	}
+
+	if scpPath != "" {
+		senders = append(senders, &ScpSender{scpPath, logger})
 	}
 
 	i := 0
