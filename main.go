@@ -19,6 +19,7 @@ func main() {
 		spf        int
 		format     string
 		device     string
+		logFile    string
 		bot        telegram.API
 	)
 
@@ -29,14 +30,15 @@ func main() {
 	flag.IntVar(&spf, "spf", 1, "Grab 1 frame every `N` seconds")
 	flag.StringVar(&format, "f", "v4l2", "Source format for ffmpeg")
 	flag.StringVar(&device, "i", "/dev/video0", "Input file for ffmpeg")
+	flag.StringVar(&logFile, "l", "ant.log", "Log file")
 	flag.Parse()
 
-	logFile, err := os.Create("ant.log")
+	logf, err := os.Create(logFile)
 	if err != nil {
 		log.Fatalf("Cannot create logfile ant.log: %s", err)
 	}
 
-	logger := log.New(io.MultiWriter(logFile, os.Stderr), "", log.LstdFlags)
+	logger := log.New(io.MultiWriter(logf, os.Stderr), "", log.LstdFlags)
 
 	senders := []Sender{}
 
