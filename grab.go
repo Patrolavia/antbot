@@ -29,7 +29,7 @@ type Grabber struct {
 func (g *Grabber) Grab(dir string) {
 	t := time.Now()
 	seg := strconv.Itoa(g.Segment)
-	fn := fmt.Sprintf("%s/%%0%.0fd.png", dir, math.Log10(float64(g.Segment)/float64(g.SPF)))
+	fn := fmt.Sprintf("%s/%%0%.0fd.png", dir, math.Ceil(math.Log10(float64(g.Segment)/float64(g.SPF))))
 	g.Printf("Grabbing to dir %s ...", fn)
 	frameRate := fmt.Sprintf("1/%d", g.SPF)
 
