@@ -22,6 +22,7 @@ type Grabber struct {
 	Format     string
 	Device     string
 	Senders    []Sender
+	Process    *os.Process
 	*log.Logger
 }
 
@@ -49,9 +50,13 @@ func (g *Grabber) Grab(dir string) {
 		defer f.Close()
 	}
 
-	if err := proc.Run(); err == nil {
+	g.Process = proc.Process
+	err := proc.Run()
+	g.Process = nil
+	if err == nil {
 		go g.Encode(dir, fn, t)
 	} else {
+		g.Encode(dir, fn, t)
 		g.Fatalf("Grabber error: %s", err)
 	}
 }
@@ -59,6 +64,10 @@ func (g *Grabber) Grab(dir string) {
 // Encode grabbed image to video
 func (g *Grabber) Encode(dir, fn string, t time.Time) {
 	defer g.Cleanup(dir)
+	if _, err := os.Stat(fmt.Sprintf(fn, 1)); err != nil {
+		g.Printf("No grabbed data found in %s ...", dir)
+		return
+	}
 	g.Printf("Encoding from %s ...", fn)
 
 	// encode to mp4. ref: http://rodrigopolo.com/ffmpeg/cheats.php

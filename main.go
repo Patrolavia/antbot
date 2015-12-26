@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"io"
 	"io/ioutil"
@@ -66,6 +67,25 @@ func main() {
 		Senders:    senders,
 		Logger:     logger,
 	}
+
+	go func(g *Grabber, l *log.Logger) {
+		r := bufio.NewReader(os.Stdin)
+		for {
+			str, err := r.ReadString('\n')
+			if err != nil {
+				continue
+			}
+			switch strings.ToLower(str) {
+			case "q", "quit":
+				log.Print("Got quit command")
+				if g.Process != nil {
+					g.Process.Kill()
+				}
+			case "fq", "forcequit":
+				os.Exit(0)
+			}
+		}
+	}(grabber, logger)
 
 	for {
 		dir := "work" + strconv.Itoa(i)
