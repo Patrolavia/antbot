@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -23,6 +24,7 @@ type Grabber struct {
 	Device     string
 	Senders    []Sender
 	Process    *os.Process
+	*sync.Mutex
 	*log.Logger
 }
 
@@ -63,6 +65,8 @@ func (g *Grabber) Grab(dir string) {
 
 // Encode grabbed image to video
 func (g *Grabber) Encode(dir, fn string, t time.Time) {
+	g.Lock()
+	defer g.Unlock()
 	defer g.Cleanup(dir)
 	if _, err := os.Stat(fmt.Sprintf(fn, 1)); err != nil {
 		g.Printf("No grabbed data found in %s ...", dir)
