@@ -22,5 +22,5 @@ func (s *TelegramChannelSender) Send(fn string, duration int, t time.Time) {
 		caption,
 		nil,
 	)
-	s.Printf("%s video sent to channel %s (err=%v)", caption, s.Channel, err)
+	s.Printf("[TGCH] %s video sent to channel %s (err=%v)", caption, s.Channel, err)
 }

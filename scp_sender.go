@@ -16,10 +16,10 @@ func (s *ScpSender) Send(fn string, duration int, t time.Time) {
 
 	output, err := proc.CombinedOutput()
 	if err != nil {
-		s.Printf("Error sending via scp to %s: %s", s.Path, err)
-		s.Print(string(output))
+		s.Printf("[SCP ] Error sending via scp to %s: %s", s.Path, err)
+		s.Print("[SCP ]", string(output))
 		return
 	}
 
-	s.Printf("Successfully sent to %s via scp", s.Path)
+	s.Printf("[SCP ] Successfully sent to %s via scp", s.Path)
 }

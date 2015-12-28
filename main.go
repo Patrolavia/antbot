@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"io"
 	"io/ioutil"
@@ -9,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/Patrolavia/botgoram/telegram"
 )
@@ -56,47 +56,51 @@ func main() {
 		senders = append(senders, &ScpSender{scpPath, logger})
 	}
 
-	i := 0
-
 	grabber := &Grabber{
 		Segment:    segment,
 		Resolution: resolution,
 		SPF:        spf,
 		Format:     format,
 		Device:     device,
+		Logger:     logger,
+		Mutex:      &sync.Mutex{},
+	}
+
+	encoder := &Encoder{
+		Segment:    segment,
+		Resolution: resolution,
+		SPF:        spf,
 		Senders:    senders,
+		Queue:      make(chan WorkInfo, 1),
 		Logger:     logger,
 	}
 
-	go func(g *Grabber, l *log.Logger) {
-		r := bufio.NewReader(os.Stdin)
-		for {
-			str, err := r.ReadString('\n')
-			if err != nil {
-				continue
-			}
-			switch strings.ToLower(str) {
-			case "q", "quit":
-				log.Print("Got quit command")
-				if g.Process != nil {
-					g.Process.Kill()
-				}
-			case "fq", "forcequit":
-				os.Exit(0)
-			}
-		}
-	}(grabber, logger)
+	logger.Printf("[MAIN] Starting flow controller ...")
+	ctrl := &CLIController{os.Stdin}
+	go ctrl.Control(grabber, encoder, logger)
 
-	for {
-		dir := "work" + strconv.Itoa(i)
-		if err := os.Mkdir(dir, 0644); err != nil {
-			logger.Fatalf("Cannot create temp dir %s: %s", dir, err)
+	logger.Printf("[MAIN] Starting cam grabber ...")
+	go func(g *Grabber, e *Encoder, l *log.Logger) {
+		i := 0
+		for {
+			dir := "work" + strconv.Itoa(i)
+			if err := os.Mkdir(dir, 0644); err != nil {
+				l.Fatalf("Cannot create temp dir %s: %s", dir, err)
+			}
+			ret, err := g.Grab(dir)
+			if err != nil {
+				close(e.Queue)
+				return
+			}
+			e.Queue <- ret
+			if i++; i > 99 {
+				i = 0
+			}
 		}
-		grabber.Grab(dir)
-		if i++; i > 99 {
-			i = 0
-		}
-	}
+	}(grabber, encoder, logger)
+
+	logger.Printf("[MAIN] Starting encoder ...")
+	encoder.Run()
 }
 
 func initTelegram(file string, bot telegram.API) telegram.API {
@@ -105,13 +109,17 @@ func initTelegram(file string, bot telegram.API) telegram.API {
 	}
 	tokenByte, err := ioutil.ReadFile(file)
 	if err != nil {
-		log.Fatalf(`Cannot read telegram bot token from file "token": %s`, err)
+		log.Fatalf(`[MAIN] Cannot read telegram bot token from file "token": %s`, err)
 	}
 
 	ret := telegram.New(strings.TrimSpace(string(tokenByte)))
 
 	if _, err := ret.Me(); err != nil {
-		log.Fatalf("Error validating bot: %s", err)
+		log.Fatalf("[MAIN] Error validating bot: %s", err)
 	}
 	return ret
+}
+
+type Controller interface {
+	Control(g *Grabber, e *Encoder, l *log.Logger)
 }
