@@ -24,6 +24,7 @@ func main() {
 		device     string
 		logFile    string
 		scpPath    string
+		httpBind   string
 		bot        telegram.API
 	)
 
@@ -36,6 +37,7 @@ func main() {
 	flag.StringVar(&tokenFile, "t", "token", "The file holding telegram bot token")
 	flag.StringVar(&channel, "ch", "", "Telegram channel to announce your video, leave empty if not using this feature")
 	flag.StringVar(&scpPath, "scp", "", "Send video to this path via scp")
+	flag.StringVar(&httpBind, "webc", "", "Enable web controller at [ip address]:port, eg. :8000 or 192.168.1.1:1234")
 	flag.Parse()
 
 	logf, err := os.Create(logFile)
@@ -75,16 +77,22 @@ func main() {
 		Logger:     logger,
 	}
 
-	logger.Printf("[MAIN] Starting flow controller ...")
+	logger.Print("[MAIN] Starting flow controller ...")
 	ctrl := &CLIController{os.Stdin}
 	go ctrl.Control(grabber, encoder, logger)
 
-	logger.Printf("[MAIN] Starting cam grabber ...")
+	if httpBind != "" {
+		logger.Print("[MAIN] Starting web flow controller ...")
+		webc := &HTTPController{Bind: httpBind}
+		go webc.Control(grabber, encoder, logger)
+	}
+
+	logger.Print("[MAIN] Starting cam grabber ...")
 	go func(g *Grabber, e *Encoder, l *log.Logger) {
 		i := 0
 		for {
 			dir := "work" + strconv.Itoa(i)
-			if err := os.Mkdir(dir, 0644); err != nil {
+			if err := os.Mkdir(dir, 0755); err != nil {
 				l.Fatalf("Cannot create temp dir %s: %s", dir, err)
 			}
 			ret, err := g.Grab(dir)
