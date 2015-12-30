@@ -31,5 +31,4 @@ func (c *HTTPController) ForceQuit(w http.ResponseWriter, r *http.Request) {
 func (c *HTTPController) Quit(w http.ResponseWriter, r *http.Request) {
 	c.Print("[WEBC] Got quit command")
 	c.Grabber.Interrupt()
-	close(c.Encoder.Queue)
 }
