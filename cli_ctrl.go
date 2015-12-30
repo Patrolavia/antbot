@@ -17,6 +17,7 @@ func (c *CLIController) Control(g *Grabber, e *Encoder, l *log.Logger) {
 		str, err := r.ReadString('\n')
 		if err != nil {
 			// unable to use cli controller, exit.
+			l.Print("[CLIC] Unable read data from stdin, cli controller disabled.")
 			return
 		}
 		l.Printf("[CLIC] Got input %s", str)
