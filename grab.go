@@ -86,13 +86,27 @@ type Encoder struct {
 	SPF        int    // seconds per frame
 	Senders    []Sender
 	Queue      chan WorkInfo
+	process    *os.Process
 	*log.Logger
+}
+
+func (e *Encoder) Interrupt() {
+	close(e.Queue)
+	for range e.Queue {
+	}
+	proc := e.process
+	if proc != nil {
+		proc.Kill()
+	}
 }
 
 // Encode grabbed image to video
 func (e *Encoder) Run() {
 	for work := range e.Queue {
 		fn, dir, t := work.Filename, work.Dir, work.Time
+		if fn == "" || dir == "" {
+			continue
+		}
 
 		if _, err := os.Stat(fmt.Sprintf(fn, 1)); err != nil {
 			e.Printf("[ENC ] No grabbed data found in %s ...", dir)
@@ -126,10 +140,12 @@ func (e *Encoder) Run() {
 		proc.Stderr = f
 		defer f.Close()
 
+		e.process = proc.Process
 		if err = proc.Run(); err != nil {
 			e.Printf("[ENC ] Subprocess returns error: %s", err)
 			continue
 		}
+		e.process = nil
 
 		totalFrames := e.Segment / e.SPF
 		duration := float64(totalFrames) / (24000.0 / 1001.0)

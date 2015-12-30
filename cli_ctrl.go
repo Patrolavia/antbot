@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"io"
 	"log"
-	"os"
 	"strings"
 )
 
@@ -29,7 +28,8 @@ func (c *CLIController) Control(g *Grabber, e *Encoder, l *log.Logger) {
 			return
 		case "fq", "forcequit":
 			l.Print("[CLIC] Got force quit command")
-			os.Exit(0)
+			g.Interrupt()
+			e.Interrupt()
 		}
 	}
 }

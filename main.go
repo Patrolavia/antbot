@@ -96,11 +96,11 @@ func main() {
 				l.Fatalf("Cannot create temp dir %s: %s", dir, err)
 			}
 			ret, err := g.Grab(dir)
+			e.Queue <- ret
 			if err != nil {
 				close(e.Queue)
 				return
 			}
-			e.Queue <- ret
 			if i++; i > 99 {
 				i = 0
 			}
@@ -109,6 +109,7 @@ func main() {
 
 	logger.Printf("[MAIN] Starting encoder ...")
 	encoder.Run()
+	logger.Printf("[MAIN] Exiting ...")
 }
 
 func initTelegram(file string, bot telegram.API) telegram.API {

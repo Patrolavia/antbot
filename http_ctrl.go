@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 )
 
 type HTTPController struct {
@@ -25,7 +24,8 @@ func (c *HTTPController) Control(g *Grabber, e *Encoder, l *log.Logger) {
 
 func (c *HTTPController) ForceQuit(w http.ResponseWriter, r *http.Request) {
 	c.Print("[WEBC] Got force quit command")
-	os.Exit(0)
+	c.Grabber.Interrupt()
+	c.Encoder.Interrupt()
 }
 
 func (c *HTTPController) Quit(w http.ResponseWriter, r *http.Request) {
