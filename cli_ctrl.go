@@ -16,8 +16,8 @@ func (c *CLIController) Control(g *Grabber, e *Encoder, l *log.Logger) {
 	for {
 		str, err := r.ReadString('\n')
 		if err != nil {
-			l.Printf("[CLIC] Error reading input: %s", err)
-			continue
+			// unable to use cli controller, exit.
+			return
 		}
 		l.Printf("[CLIC] Got input %s", str)
 		switch strings.ToLower(strings.TrimSpace(str)) {
