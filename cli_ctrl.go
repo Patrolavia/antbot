@@ -24,7 +24,6 @@ func (c *CLIController) Control(g *Grabber, e *Encoder, l *log.Logger) {
 		case "q", "quit":
 			l.Print("[CLIC] Got quit command")
 			g.Interrupt()
-			close(e.Queue)
 			return
 		case "fq", "forcequit":
 			l.Print("[CLIC] Got force quit command")

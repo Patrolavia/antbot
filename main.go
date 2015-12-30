@@ -98,6 +98,7 @@ func main() {
 			ret, err := g.Grab(dir)
 			e.Queue <- ret
 			if err != nil {
+				l.Printf("[MAIN] Got error from grabber: %s, %#v", err, ret)
 				close(e.Queue)
 				return
 			}

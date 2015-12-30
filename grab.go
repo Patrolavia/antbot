@@ -105,6 +105,7 @@ func (e *Encoder) Run() {
 	for work := range e.Queue {
 		fn, dir, t := work.Filename, work.Dir, work.Time
 		if fn == "" || dir == "" {
+			e.Print("[ENC ] Got empty workinfo")
 			continue
 		}
 
@@ -153,11 +154,12 @@ func (e *Encoder) Run() {
 		e.Send(dir, int(duration), t)
 		e.Cleanup(work)
 	}
+	e.Print("[ENC ] No more works.")
 }
 
 // Cleanup work temp
-func (g *Encoder) Cleanup(work WorkInfo) {
-	g.Printf("[ENC ] Cleaning up %s ...", work.Dir)
+func (e *Encoder) Cleanup(work WorkInfo) {
+	e.Printf("[ENC ] Cleaning up %s ...", work.Dir)
 	os.RemoveAll(work.Dir)
 }
 
