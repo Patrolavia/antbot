@@ -28,16 +28,18 @@ type Grabber struct {
 	SPF        int    // seconds per frame
 	Format     string
 	Device     string
-	process    *os.Process
+	process    *exec.Cmd
 	*sync.Mutex
 	*log.Logger
 }
 
 func (g *Grabber) Interrupt() {
-	proc := g.process
+	cmd := g.process
 
-	if proc != nil {
-		proc.Kill()
+	if cmd != nil {
+		if err := cmd.Process.Kill(); err != nil {
+			g.Printf("Cannot kill grabber process: %s")
+		}
 	}
 }
 
@@ -67,7 +69,7 @@ func (g *Grabber) Grab(dir string) (ret WorkInfo, err error) {
 		defer f.Close()
 	}
 
-	g.process = proc.Process
+	g.process = proc
 	err = proc.Run()
 	g.process = nil
 
@@ -86,7 +88,7 @@ type Encoder struct {
 	SPF        int    // seconds per frame
 	Senders    []Sender
 	Queue      chan WorkInfo
-	process    *os.Process
+	process    *exec.Cmd
 	*log.Logger
 }
 
@@ -94,9 +96,11 @@ func (e *Encoder) Interrupt() {
 	close(e.Queue)
 	for range e.Queue {
 	}
-	proc := e.process
-	if proc != nil {
-		proc.Kill()
+	cmd := e.process
+	if cmd != nil {
+		if err := cmd.Process.Kill(); err != nil {
+			e.Printf("Cannot kill encoder process: %s")
+		}
 	}
 }
 
@@ -141,7 +145,7 @@ func (e *Encoder) Run() {
 		proc.Stderr = f
 		defer f.Close()
 
-		e.process = proc.Process
+		e.process = proc
 		if err = proc.Run(); err != nil {
 			e.Printf("[ENC ] Subprocess returns error: %s", err)
 			continue
