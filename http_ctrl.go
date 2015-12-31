@@ -17,18 +17,18 @@ func (c *HTTPController) Control(g *Grabber, e *Encoder, l *log.Logger) {
 	c.Grabber = g
 	c.Encoder = e
 
-	http.HandleFunc("/quit", c.Quit)
-	http.HandleFunc("/forcequit", c.ForceQuit)
+	http.HandleFunc("/quit", c.quit)
+	http.HandleFunc("/forcequit", c.forceQuit)
 	http.ListenAndServe(c.Bind, nil)
 }
 
-func (c *HTTPController) ForceQuit(w http.ResponseWriter, r *http.Request) {
+func (c *HTTPController) forceQuit(w http.ResponseWriter, r *http.Request) {
 	c.Print("[WEBC] Got force quit command")
 	c.Grabber.Interrupt()
 	c.Encoder.Interrupt()
 }
 
-func (c *HTTPController) Quit(w http.ResponseWriter, r *http.Request) {
+func (c *HTTPController) quit(w http.ResponseWriter, r *http.Request) {
 	c.Print("[WEBC] Got quit command")
 	c.Grabber.Interrupt()
 }
