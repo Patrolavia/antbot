@@ -9,7 +9,7 @@ import (
 func html(title, body string) []byte {
 	return []byte(fmt.Sprintf(
 		`<html><head><title>%s</title><meta charset="utf8">
-<style>.controller {position: absolute; display: block; height: 200px; width: 200px; top: 50%%; left: 50%%; margin: -150px 0 0 -100px; } .button {display: block; height: 80px; width: 180px; text-align: center; line-height: 80px; border-redius: 10px; margin: 10px; font-size: 38px; color: white; text-shadow: 0 -1px 1px rgba(255, 255, 255, .5); } .button-quit { background-color: #E53935; } .button-forceQuit { background-color: #D81B60; }</style>
+<style>.controller {position: absolute; display: block; height: 200px; width: 280px; top: 50%%; left: 50%%; margin: -150px 0 0 -140px; } .button {display: block; height: 80px; width: 100%%; text-align: center; line-height: 80px; border-redius: 10px; margin: 10px; font-size: 38px; color: white; text-shadow: 0 -1px 1px rgba(255, 255, 255, .5); } .button-quit { background-color: #E53935; } .button-forceQuit { background-color: #D81B60; } a { text-decoration: none; }</style>
 </head><body>%s</body></html>`,
 		title,
 		body,
